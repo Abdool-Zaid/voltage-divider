@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>voltage divider</title>
+    <style>
+        *{
+            background-color: black;
+            color: white;
+        }
+        #target_ratio{
+            width: 8em;
+        }
+        img{
+            height: 600px;
+        }
+
+    </style>
+</head>
+<body>
+    <input type="number" name="target_ratio" id="target_ratio" placeholder="target ratio" min="0.001" max="0.999" step="0.001" >
+    <input type="number" name="new_value" id="new_value" placeholder="next value" min="1" max="1000000">
+    <h1 id="output">default</h1>
+    <img src="resistor-color-Code-2.png" alt="resistor colour codes">
+
+    <script>
+        const target_ratio = document.getElementById('target_ratio')
+        const new_value = document.getElementById('new_value')
+        const data_prototype = {
+            target_ratio:123,
+            ratio_tolerance:0.05,
+            resistor_values :[],
+        }
+    const data_handler = {
+  get(target, prop, receiver) {
+    const value = Reflect.get(target, prop, receiver);
+    // console.log(`Getting ${prop}`);
+    return value;
+  },
+set(target, prop, value, receiver) {
+    // console.log(`Setting property ${prop} to`, value);
+
+    const result = Reflect.set(target, prop, value, receiver);
+    // console.log(prop, value)
+    switch (prop) {
+      case "target_ratio":
+        print_to_screen(`aiming for ${value}`);
+        break;
+      case "resistor_values":
+        print_to_screen(`adding new value : ${new_value.value}`);
+        break;
+     
+      default:
+        break;
+    }
+
+    save_to_storage();
+
+    return result; 
+  }
+};
+
+
+
+function print_to_screen(text_to_print){
+    const output_view =document.getElementById("output") 
+    output_view.innerHTML=''
+    output_view.innerHTML=text_to_print
+}
+function save_to_storage(){
+    localStorage.setItem("data_prototype", JSON.stringify(model_data))
+}
+
+function calc_ratio(){
+    if(model_data.resistor_values.length <2){
+        print_to_screen('please continue to add resistor values')
+    }else{
+       for (let index = 0; index < model_data.resistor_values.length; index++) {
+        const resistor = model_data.resistor_values[index];
+            let comp_array = [...model_data.resistor_values.slice(0, index), ...model_data.resistor_values.slice(index + 1)];
+            console.log("comp_array", comp_array  )
+            console.log('main array', model_data.resistor_values)
+       }
+    }
+}
+
+
+// run
+let model_data 
+
+if (localStorage.data_prototype ==null) {
+    model_data =  new Proxy(data_prototype, data_handler)
+    print_to_screen("please enter a target ratio in the target ratio field")
+
+}else{
+    model_data =  new Proxy(JSON.parse(localStorage.data_prototype), data_handler)
+    print_to_screen(`aiming for ${model_data.target_ratio}`)
+}
+
+
+target_ratio.addEventListener('change',()=>{
+   
+    model_data.target_ratio= target_ratio.value
+    target_ratio.value=''
+})
+
+new_value.addEventListener('change',()=>{
+
+    model_data.resistor_values =[... model_data.resistor_values,new_value.value]
+    new_value.value= ''
+    calc_ratio()
+
+})
+</script>
+</body>
+</html> 
