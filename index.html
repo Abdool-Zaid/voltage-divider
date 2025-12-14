@@ -20,7 +20,7 @@
 </head>
 <body>
     <input type="number" name="target_ratio" id="target_ratio" placeholder="target ratio" min="0.001" max="0.999" step="0.001" >
-    <input type="number" name="new_value" id="new_value" placeholder="next value" min="1" max="1000000">
+    <input type="number" name="new_value" id="new_value" placeholder="next value" min="1" max="1000000" disabled>
     <h1 id="output">default</h1>
     <img src="resistor-color-Code-2.png" alt="resistor colour codes">
 
@@ -35,14 +35,11 @@
     const data_handler = {
   get(target, prop, receiver) {
     const value = Reflect.get(target, prop, receiver);
-    // console.log(`Getting ${prop}`);
     return value;
   },
 set(target, prop, value, receiver) {
-    // console.log(`Setting property ${prop} to`, value);
 
     const result = Reflect.set(target, prop, value, receiver);
-    // console.log(prop, value)
     switch (prop) {
       case "target_ratio":
         print_to_screen(`aiming for ${value}`);
@@ -79,9 +76,17 @@ function calc_ratio(){
        for (let index = 0; index < model_data.resistor_values.length; index++) {
         const resistor = model_data.resistor_values[index];
             let comp_array = [...model_data.resistor_values.slice(0, index), ...model_data.resistor_values.slice(index + 1)];
-            console.log("comp_array", comp_array  )
-            console.log('main array', model_data.resistor_values)
-       }
+            comp_array.forEach(alt_resistor => {
+                const actual_ratio = Math.min(resistor / alt_resistor, alt_resistor / resistor);
+                const upper = model_data.target_ratio * (1 + model_data.ratio_tolerance);
+                const lower = model_data.target_ratio * (1 - model_data.ratio_tolerance);
+                if (actual_ratio >= lower && actual_ratio <= upper) {           
+                    alert(`A match was found with ${resistor} and ${alt_resistor}`);
+                return 0;
+                }
+                
+            });
+        }
     }
 }
 
@@ -96,6 +101,7 @@ if (localStorage.data_prototype ==null) {
 }else{
     model_data =  new Proxy(JSON.parse(localStorage.data_prototype), data_handler)
     print_to_screen(`aiming for ${model_data.target_ratio}`)
+    new_value.disabled =false
 }
 
 
@@ -103,6 +109,7 @@ target_ratio.addEventListener('change',()=>{
    
     model_data.target_ratio= target_ratio.value
     target_ratio.value=''
+    new_value.disabled =false
 })
 
 new_value.addEventListener('change',()=>{
